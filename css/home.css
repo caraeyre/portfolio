@@ -258,7 +258,14 @@
 
 .home__bio-location {
   color: var(--color-grey);
+  margin-top: 24px !important;
   margin-bottom: 0 !important;
+}
+
+@media (min-width: 900px) {
+  .home__bio-location {
+    margin-top: 0 !important;
+  }
 }
 
 .home__footer {

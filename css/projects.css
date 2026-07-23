@@ -154,23 +154,50 @@
   min-height: 0;
 }
 
-/* project panel: fills the stage completely; only the active one is visible */
-
-.project {
-  position: absolute;
-  inset: 0;
-  background: var(--proj-bg);
-  opacity: 0;
-  transform: translateY(14px);
-  transition: opacity 1.1s ease, transform 1.1s ease;
-  pointer-events: none;
-  overflow: hidden;
+/* below the carousel breakpoint, every project is shown in full, stacked in normal
+   document flow — the stage just scrolls like any other page instead of locking to a
+   single active panel. */
+@media (max-width: 899px) {
+  .projects-stage {
+    overflow-y: auto;
+  }
 }
 
-.project.is-active {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
+/* project panel: on mobile, a normal block in the page's flow. At the carousel breakpoint
+   it switches to filling the stage completely, with only the active one visible. */
+
+.project {
+  background: var(--proj-bg);
+}
+
+/* a closing line under every project below the carousel breakpoint — without it, a
+   project's last image runs straight into the next project's description with nothing
+   marking the handoff, especially when two consecutive projects share the same light/dark
+   theme and there's no background-colour change to read as a break either. Uses the
+   project's own border colour, so it's visible against its own background regardless of
+   what comes next. */
+@media (max-width: 899px) {
+  .project {
+    border-bottom: 0.5px solid var(--proj-border);
+  }
+}
+
+@media (min-width: 900px) {
+  .project {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 1.1s ease, transform 1.1s ease;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .project.is-active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
 }
 
 .project--light {
@@ -198,14 +225,33 @@
 }
 
 .project__box {
-  height: 100%;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+}
+
+/* below the carousel breakpoint every project shows its description first, then media —
+   consistent order regardless of the desktop-only --image-first variants below */
+@media (max-width: 899px) {
+  .project__text {
+    order: 1;
+  }
+
+  .project__media {
+    order: 2;
+  }
+
+  /* the divider between description and images is desktop-only (a vertical rule between
+     the two grid columns there) — on mobile a line between them would read as a break, but
+     the only real break is between one project and the next (see .project's border-bottom
+     above), so this stays hidden */
+  .project__divider {
+    display: none;
+  }
 }
 
 @media (min-width: 900px) {
   .project__box {
+    height: 100%;
     display: grid;
     grid-template-columns: var(--split, 1fr) 0.5px 1fr;
     align-items: stretch;
@@ -244,16 +290,15 @@
 .project__text {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
-  justify-content: flex-start;
   gap: 16px;
   padding: 28px 20px 28px;
-  overflow-y: auto;
 }
 
 @media (min-width: 900px) {
   .project__text {
+    flex-shrink: 0;
     justify-content: flex-end;
+    overflow-y: auto;
   }
 }
 
@@ -320,7 +365,6 @@
   position: relative;
   min-height: 200px;
   padding: 28px 20px;
-  overflow-y: auto;
 }
 
 @media (min-width: 700px) {
@@ -331,172 +375,269 @@
 
 @media (min-width: 900px) {
   .project__media {
-    min-height: 0;
+    flex-shrink: 0;
+    overflow-y: auto;
     padding: 56px 64px;
     display: flex;
     flex-direction: column;
   }
 }
 
-/* paginated image pages: the media box's own bounds (top/bottom) never move — only the
-   pages inside crossfade in place. Each page is a self-contained grouped layout (e.g. a
-   2-image hero stack). A minimal prev/next chevron pair (bottom corners) pages through
-   them and loops; the prev chevron only appears once the visitor has navigated at least
-   once, so the very first page loads arrow-clean. */
+/* paginated image pages: only the active page shows, cycled via a minimal prev/next
+   chevron pair — same pagination on both mobile and desktop, going "side to side" through
+   a project's images. What differs is how a page is hidden: below the carousel breakpoint
+   it's a plain display:none/flex swap with no fixed-height box (safe for any image size,
+   nothing to crop); at 900px+ the media box's own bounds never move and pages crossfade in
+   place via absolute positioning + opacity instead. */
 
 .project__pages {
   position: relative;
   width: 100%;
-  aspect-ratio: 4 / 5;
 }
 
 @media (min-width: 900px) {
   .project__pages {
     flex: 1;
     min-height: 0;
-    aspect-ratio: auto;
   }
 }
 
 .project__page {
-  position: absolute;
-  inset: 0;
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.9s ease;
 }
 
 .project__page.is-active {
-  opacity: 1;
-  pointer-events: auto;
+  display: flex;
 }
 
 @media (min-width: 900px) {
   .project__page {
+    display: flex;
+    position: absolute;
+    inset: 0;
     gap: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.9s ease;
+  }
+
+  .project__page.is-active {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 
-/* a lone full-page image (not part of a row) shrink-wraps to its own rendered size —
-   width/height stay auto, capped by the available box — so a border sits flush against
-   the actual artwork instead of around empty object-fit:contain letterboxing. */
-.project__page img {
+/* a lone full-page image (not part of a row): below the carousel breakpoint it just sizes
+   to its own natural proportions at the available width. From 900px it shrink-wraps to its
+   own rendered size instead — width/height stay auto, capped by the available box — so a
+   border sits flush against the actual artwork instead of around empty object-fit:contain
+   letterboxing. */
+.project__page > img {
   display: block;
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
-  flex: 0 1 auto;
-  min-height: 0;
-  object-fit: contain;
-}
-
-/* the hero stack (page 1) is a deliberate full-bleed crop, edge to edge — it fills the
-   box completely (no letterboxing by definition), so it keeps the old fixed sizing */
-.project__page--crop img {
   width: 100%;
-  height: 100%;
-  flex: 1 1 0;
-  object-fit: cover;
-}
-
-/* grouped rows within a page: a page can hold one or more horizontal rows of images,
-   stacked vertically. Images are never cropped — each is shown in full within its row. */
-
-.project__page-row {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-/* the mid row only has 2 (larger) images, so its natural centred span is narrower than
-   the 4-card rows above/below — widen the gap between the pair to push their outer edges
-   outward until they line up with the row above/below. */
-.project__page-row--mid {
-  flex: 1.4 1 0;
-  gap: 8px;
-}
-
-#project-trc .project__page:nth-of-type(3) .project__page-row--mid {
-  gap: 51px;
-}
-
-/* CHL: the landscape report-spread hero should read as the dominant image, with the
-   portrait strip of 4 cards below sitting clearly smaller — matches the Figma proportions
-   (hero roughly 2.5x the strip's height) rather than the default 1.4:1 mid-row ratio. The
-   ratio is also tuned so the hero's and strip's rendered content widths land equal, so their
-   outer edges line up despite the very different landscape/portrait aspect ratios. */
-#project-chl .project__page-row--mid {
-  flex: 2.49 1 0;
-}
-
-#project-chl .project__page-row:not(.project__page-row--mid) {
-  flex: 1 1 0;
-}
-
-/* CIVICUS: page 1's two landscape images share the same native width (2000px) but
-   different aspect ratios (CIVICUS_1 is 2000x1589, CIVICUS_2 is 2000x1413), so equal row
-   heights render CIVICUS_2 visibly wider than CIVICUS_1. Weighting each row's flex-grow by
-   the image's own natural height keeps both rendered at the same width (the same effective
-   scale from their shared 2000px native width) instead of matching heights and letting the
-   widths diverge. Page 2's images share identical dimensions already, so no override needed. */
-#project-civicus .project__page:nth-of-type(1) .project__page-row:nth-of-type(1) {
-  flex: 1589 1 0;
-}
-
-#project-civicus .project__page:nth-of-type(1) .project__page-row:nth-of-type(2) {
-  flex: 1413 1 0;
-}
-
-/* every row image keeps its own natural proportions at the row's full height — this is
-   what keeps the top/bottom edges flush with the row (and with page 1's edge-to-edge
-   images) instead of letterboxing when a fixed equal-width slot doesn't match its
-   aspect ratio. Width is intrinsic, so images shrink to fit rather than crop or stretch. */
-.project__page-row img {
-  flex: 0 1 auto;
-  min-width: 0;
-  width: auto;
-  height: 100%;
-  object-fit: contain;
-}
-
-/* the mid row's two (larger) images don't need to shrink */
-.project__page-row--mid img {
-  flex: 0 0 auto;
-}
-
-/* the nav's height matches .project__media's own bottom padding at each breakpoint below,
-   so the arrows are vertically centred in the gap between the images and the frame edge —
-   then nudged up a touch so they don't sit right in the corner. Left/right use the same
-   20px/40px insets as the header's own padding (not media's wider padding), so the right
-   arrow lands flush with the header nav above, and the left arrow gets the same spacing,
-   mirrored off the media panel's own left edge. */
-.project__page-nav {
-  position: absolute;
-  left: 20px;
-  right: 20px;
-  bottom: 0;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transform: translateY(-8px);
-  pointer-events: none;
-  z-index: 4;
-}
-
-@media (min-width: 700px) {
-  .project__page-nav { height: 40px; left: 40px; right: 40px; }
+  height: auto;
 }
 
 @media (min-width: 900px) {
-  .project__page-nav { height: 56px; }
+  .project__page > img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    flex: 0 1 auto;
+    min-height: 0;
+    object-fit: contain;
+  }
+}
+
+/* the hero stack (page 1, TRC): a deliberate full-bleed crop from 900px, edge to edge.
+   Below that it drops the forced crop and just shows each image at its natural
+   proportions (via the .project__page > img rule above) — "fill the box completely"
+   doesn't apply once the box is just content-height. */
+@media (min-width: 900px) {
+  .project__page--crop img {
+    width: 100%;
+    height: 100%;
+    flex: 1 1 0;
+    object-fit: cover;
+  }
+}
+
+/* grouped rows within a page: a page can hold one or more rows of images, and each row is
+   a deliberate grouping (e.g. 4 small cards, or 2 larger ones side by side). Below the
+   carousel breakpoint each row becomes a small grid instead of one full-width image per
+   line — this keeps the same groupings visible at a glance as on desktop, just wrapping to
+   as many columns as comfortably fit (2 on a typical phone) rather than laying every image
+   out in one unbroken horizontal line. A row with only one image still gets the full
+   width, since there's nothing else to sit beside it. From 900px, rows lay their images
+   out horizontally instead, sized to the row's share of the page's fixed height (never
+   cropped — each image is shown in full within its row). */
+
+.project__page-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+/* the mid row's images are meant to read larger/more prominent than a 4-card row — give
+   them a bigger minimum before wrapping */
+.project__page-row--mid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+@media (min-width: 900px) {
+  .project__page-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 20px;
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  /* the mid row only has 2 (larger) images, so its natural centred span is narrower than
+     the 4-card rows above/below — widen the gap between the pair to push their outer edges
+     outward until they line up with the row above/below. */
+  .project__page-row--mid {
+    grid-template-columns: unset;
+    flex: 1.4 1 0;
+    gap: 8px;
+  }
+
+  #project-trc .project__page:nth-of-type(3) .project__page-row--mid {
+    gap: 51px;
+  }
+
+  /* CHL: the landscape report-spread hero should read as the dominant image, with the
+     portrait strip of 4 cards below sitting clearly smaller — matches the Figma proportions
+     (hero roughly 2.5x the strip's height) rather than the default 1.4:1 mid-row ratio. The
+     ratio is also tuned so the hero's and strip's rendered content widths land equal, so
+     their outer edges line up despite the very different landscape/portrait aspect ratios. */
+  #project-chl .project__page-row--mid {
+    flex: 2.49 1 0;
+  }
+
+  #project-chl .project__page-row:not(.project__page-row--mid) {
+    flex: 1 1 0;
+  }
+
+  /* CIVICUS: page 1's two landscape images share the same native width (2000px) but
+     different aspect ratios (CIVICUS_1 is 2000x1589, CIVICUS_2 is 2000x1413), so equal row
+     heights render CIVICUS_2 visibly wider than CIVICUS_1. Weighting each row's flex-grow by
+     the image's own natural height keeps both rendered at the same width (the same effective
+     scale from their shared 2000px native width) instead of matching heights and letting the
+     widths diverge. Page 2's images share identical dimensions already, so no override
+     needed. */
+  #project-civicus .project__page:nth-of-type(1) .project__page-row:nth-of-type(1) {
+    flex: 1589 1 0;
+  }
+
+  #project-civicus .project__page:nth-of-type(1) .project__page-row:nth-of-type(2) {
+    flex: 1413 1 0;
+  }
+}
+
+/* row images: below the carousel breakpoint each just fills the row's width at its own
+   natural aspect ratio. From 900px, every row image keeps its own natural proportions at
+   the row's full height instead — this is what keeps the top/bottom edges flush with the
+   row (and with page 1's edge-to-edge images) instead of letterboxing when a fixed
+   equal-width slot doesn't match its aspect ratio. Width is intrinsic, so images shrink to
+   fit rather than crop or stretch. */
+.project__page-row img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (min-width: 900px) {
+  .project__page-row img {
+    flex: 0 1 auto;
+    min-width: 0;
+    width: auto;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  /* the mid row's two (larger) images don't need to shrink */
+  .project__page-row--mid img {
+    flex: 0 0 auto;
+  }
+}
+
+/* TRC pages 2 and 3: keep each row's full image count on one line (4 across, then the
+   2-image mid row, then 4 across) instead of wrapping to 2 columns — same grouping as
+   desktop, just shrunk to fit. No cropping: images stay at their natural proportions,
+   just narrower. */
+@media (max-width: 899px) {
+  #project-trc .project__page:not(.project__page--crop) .project__page-row {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  #project-trc .project__page:not(.project__page--crop) .project__page-row--mid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  /* pages 2 and 3's mid rows each pair a landscape overlay with a portrait card — align
+     both to a shared height instead of equal grid columns, so the landscape image reads
+     wider and the portrait one narrower, matching their natural proportions instead of
+     stretching both to the same box. */
+  #project-trc .project__page:nth-of-type(2) .project__page-row--mid,
+  #project-trc .project__page:nth-of-type(3) .project__page-row--mid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 150px;
+    gap: 6px;
+  }
+
+  #project-trc .project__page:nth-of-type(2) .project__page-row--mid img,
+  #project-trc .project__page:nth-of-type(3) .project__page-row--mid img {
+    width: auto;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+/* CHL: one image, then the 4-card row below it, on both pages — force the 4-image row
+   onto one line instead of wrapping to 2 columns (the lone mid-row image already renders
+   full-width on its own, no override needed there). */
+@media (max-width: 899px) {
+  #project-chl .project__page-row:not(.project__page-row--mid) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+}
+
+/* prev/next image-page chevrons: same pagination everywhere, positioned differently. Below
+   the carousel breakpoint the nav sits in normal flow right under the current page's
+   images (there's no fixed-height box to anchor to anymore). From 900px it goes back to
+   floating over the bottom of the media box, vertically centred in the gap between the
+   images and the frame edge — nudged up a touch so it doesn't sit right in the corner. */
+.project__page-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+@media (min-width: 900px) {
+  .project__page-nav {
+    position: absolute;
+    left: 40px;
+    right: 40px;
+    bottom: 0;
+    height: 56px;
+    margin-top: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+    z-index: 4;
+  }
 }
 
 /* prev/next sit at opposite edges of the frame rather than stacked next to each other */
@@ -504,20 +645,30 @@
   pointer-events: auto;
   background: none;
   border: none;
-  padding: 10px;
-  margin: 0;
+  padding: 14px;
+  margin: -14px;
   cursor: pointer;
   color: var(--proj-title);
   opacity: 0.55;
   transition: opacity 0.2s ease, color 0.2s ease;
 }
 
-/* an inactive project panel sets pointer-events:none on itself, but that doesn't stop a
-   descendant from re-enabling its own pointer-events — without this, an inactive panel's
-   stacked-behind arrow can still intercept clicks meant for the active panel's arrow at the
-   same screen position. */
-.project:not(.is-active) .project__page-btn {
-  pointer-events: none;
+@media (min-width: 900px) {
+  .project__page-btn {
+    padding: 10px;
+    margin: 0;
+  }
+}
+
+/* on desktop an inactive project panel sets pointer-events:none on itself, but that
+   doesn't stop a descendant from re-enabling its own pointer-events — without this, an
+   inactive panel's stacked-behind arrow can still intercept clicks meant for the active
+   panel's arrow at the same screen position. Not a concern below the carousel breakpoint,
+   where every project is shown (and interactive) at once. */
+@media (min-width: 900px) {
+  .project:not(.is-active) .project__page-btn {
+    pointer-events: none;
+  }
 }
 
 /* kept in flow (not display:none) so the next button stays pinned right via

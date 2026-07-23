@@ -160,6 +160,21 @@
 .bits-item--bordered img,
 .bits-item--bordered video { border: 1px solid #f2f2f2; }
 
+/* the whole collage scales down with viewport width, but a fixed-px border doesn't —
+   so on narrow screens the same border reads much thicker relative to the now-smaller
+   images. Thin it out below the tablet breakpoint to keep it proportional. */
+@media (max-width: 699px) {
+  .bits-item--bordered img,
+  .bits-item--bordered video,
+  .bits-item__inner img {
+    border-width: 0.5px;
+  }
+
+  .bits-item--crop-tr {
+    border-width: 0.5px !important;
+  }
+}
+
 /* crops out a defect baked into the source image (a compositing seam) by zooming the
    photo in slightly and clipping the overflow; border stays on the outer box so it
    doesn't get scaled or clipped along with the image */
