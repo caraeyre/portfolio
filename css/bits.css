@@ -1,0 +1,236 @@
+.bits-page {
+  padding: 0;
+  background: #f2f2f0;
+  color: #222;
+}
+
+.bits-frame {
+  width: 100%;
+  border: 0.5px solid #222;
+}
+
+/* header: square + nav live inside the frame, flush to its edges — same treatment as
+   the Home and Selected projects headers, just in the light colourway this page uses */
+.bits-page__header {
+  position: relative;
+  min-height: 84px;
+  border-bottom: 0.5px solid #222;
+  padding: 0 20px;
+}
+
+@media (min-width: 700px) {
+  .bits-page__header {
+    min-height: 106px;
+    padding: 0 40px;
+  }
+}
+
+.bits-page__header-square {
+  position: absolute;
+  left: 20px;
+  top: 21px;
+  width: 52px;
+  height: 52px;
+  color: #222;
+  display: block;
+  border-bottom: 0;
+}
+
+.bits-page__header-square svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+  display: block;
+}
+
+.bits-page__header-square:hover,
+.bits-page__header-square:focus-visible {
+  border-bottom: 0;
+}
+
+@media (min-width: 700px) {
+  .bits-page__header-square {
+    left: 40px;
+    top: 32px;
+  }
+}
+
+.bits-page__header-nav {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+@media (min-width: 700px) {
+  .bits-page__header-nav {
+    right: 40px;
+  }
+}
+
+.bits-page__header-nav a {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: #9b9b9b;
+  border-bottom-color: transparent;
+}
+
+.bits-page__header-nav a.is-current { color: #222; }
+
+.bits-page__header-nav a:hover,
+.bits-page__header-nav a:focus-visible { color: #9b9b9b; border-bottom-color: var(--color-orange); }
+
+.bits-page__header-nav a.is-current:hover,
+.bits-page__header-nav a.is-current:focus-visible { color: #222; }
+
+/* collage canvas: fixed aspect ratio (1440 x 14744), scales fluidly with viewport width */
+
+.bits-canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1440 / 14301.68;
+  background: #f2f2f0;
+  overflow: hidden;
+}
+
+/* top border is dropped — the header's own border-bottom already draws that line, so an
+   equal border-top here would double it up right underneath */
+.bits-canvas__light-box {
+  position: absolute;
+  left: 1.528%;
+  top: 0;
+  width: 96.944%;
+  height: 40.309%;
+  border: 0.5px solid #222;
+  border-top: none;
+}
+
+.bits-canvas__dark-rect {
+  position: absolute;
+  left: 0;
+  top: 40.309%;
+  width: 100%;
+  height: 59.691%;
+  background: #0d0d0d;
+}
+
+/* inset white border, drawn separately from the full-bleed black fill above so it
+   mirrors the light-box's inset dark border at the same 1.528%/96.944% offsets */
+.bits-canvas__dark-rect::after {
+  content: '';
+  position: absolute;
+  left: 1.528%;
+  top: 0;
+  width: 96.944%;
+  height: 100%;
+  border: 0.5px solid #f2f2f2;
+  pointer-events: none;
+}
+
+.bits-item {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  height: var(--h);
+  opacity: 0;
+  transform: scale(0.97);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.bits-item.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.bits-item img,
+.bits-item video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.bits-item--bordered img,
+.bits-item--bordered video { border: 1px solid #f2f2f2; }
+
+/* crops out a defect baked into the source image (a compositing seam) by zooming the
+   photo in slightly and clipping the overflow; border stays on the outer box so it
+   doesn't get scaled or clipped along with the image */
+.bits-item--crop-tr {
+  overflow: hidden;
+  border: 1px solid #f2f2f2;
+}
+
+.bits-item--crop-tr img {
+  border: none;
+  transform: scale(1.06) translateY(2%);
+}
+
+.bits-item--rotate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bits-item__inner {
+  position: relative;
+  flex: none;
+  width: var(--iw);
+  height: var(--ih);
+  transform: rotate(var(--rot));
+}
+
+.bits-item__inner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border: 1px solid #f2f2f2;
+}
+
+/* back-to-top: sits in normal flow at the bottom of the frame, not fixed over the
+   collage — so it only appears once the visitor actually reaches the end */
+.bits-page__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 20px;
+  background: #0d0d0d;
+  border-top: 0.5px solid #f2f2f2;
+}
+
+.bits-page__top-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-bottom: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  color: #f2f2f2;
+  opacity: 0.75;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.bits-page__top-btn:hover,
+.bits-page__top-btn:focus-visible {
+  opacity: 1;
+  color: var(--color-orange);
+}
+
+.bits-page__top-btn svg {
+  display: block;
+  width: 14px;
+  height: 8px;
+}

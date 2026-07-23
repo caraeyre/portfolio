@@ -1,0 +1,554 @@
+.projects-page {
+  height: 100vh;
+  height: calc(var(--vh, 1vh) * 100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+  background: var(--color-bg);
+  transition: background-color 0.8s ease;
+}
+
+.projects-frame {
+  width: 100%;
+  border: 0.5px solid var(--color-outline-white);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: calc(var(--vh, 1vh) * 100);
+  overflow: hidden;
+  transition: background-color 0.8s ease, border-color 0.8s ease;
+}
+
+/* theme sync: the header bar and outer page background follow the active project's
+   light/dark theme instead of staying hardcoded black */
+.projects-page.theme-light,
+.projects-frame.theme-light {
+  background: #f2f2f0;
+}
+
+.projects-frame.theme-light {
+  border-color: #222;
+}
+
+.projects-page__header.theme-light {
+  border-bottom-color: #222;
+}
+
+.projects-page__header.theme-light .projects-page__header-nav a {
+  color: #9b9b9b;
+}
+
+.projects-page__header.theme-light .projects-page__header-nav a.is-current {
+  color: #222;
+}
+
+.projects-page__header.theme-light .projects-page__header-nav a:hover,
+.projects-page__header.theme-light .projects-page__header-nav a:focus-visible {
+  color: #9b9b9b;
+}
+
+.projects-page__header.theme-light .projects-page__header-nav a.is-current:hover,
+.projects-page__header.theme-light .projects-page__header-nav a.is-current:focus-visible {
+  color: #222;
+}
+
+.projects-page__header.theme-light .projects-page__header-square {
+  color: #222;
+}
+
+/* header: square + nav live inside the frame, flush to its edges, always visible */
+.projects-page__header {
+  position: relative;
+  min-height: 84px;
+  border-bottom: 0.5px solid var(--color-outline-white);
+  padding: 0 20px;
+  flex: none;
+  transition: border-color 0.8s ease;
+}
+
+@media (min-width: 700px) {
+  .projects-page__header {
+    min-height: 106px;
+    padding: 0 40px;
+  }
+}
+
+.projects-page__header-square {
+  position: absolute;
+  left: 20px;
+  top: 21px;
+  width: 52px;
+  height: 52px;
+  color: var(--color-orange);
+  transition: color 0.8s ease;
+  border-bottom: 0;
+}
+
+.projects-page__header-square:hover,
+.projects-page__header-square:focus-visible {
+  border-bottom: 0;
+}
+
+.projects-page__header-square svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+  display: block;
+}
+
+@media (min-width: 700px) {
+  .projects-page__header-square {
+    left: 40px;
+    top: 32px;
+  }
+}
+
+.projects-page__header-nav {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+@media (min-width: 700px) {
+  .projects-page__header-nav {
+    right: 40px;
+  }
+}
+
+.projects-page__header-nav a {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--color-grey);
+  border-bottom-color: transparent;
+}
+
+.projects-page__header-nav a.is-current {
+  color: var(--color-outline-white);
+}
+
+.projects-page__header-nav a:hover,
+.projects-page__header-nav a:focus-visible {
+  color: var(--color-grey);
+  border-bottom-color: var(--color-orange);
+}
+
+.projects-page__header-nav a.is-current:hover,
+.projects-page__header-nav a.is-current:focus-visible {
+  color: var(--color-outline-white);
+}
+
+/* stage: the fixed box that swaps project content in place, crossfading */
+
+.projects-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+/* project panel: fills the stage completely; only the active one is visible */
+
+.project {
+  position: absolute;
+  inset: 0;
+  background: var(--proj-bg);
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 1.1s ease, transform 1.1s ease;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.project.is-active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.project--light {
+  --proj-bg: #f2f2f0;
+  --proj-border: #222;
+  --proj-title: #222;
+  --proj-desc: #535353;
+  --proj-strong: #222;
+}
+
+.project--dark {
+  --proj-bg: #0d0d0d;
+  --proj-border: #f2f2f2;
+  --proj-title: #f2f2f2;
+  --proj-desc: #f2f2f2;
+  --proj-strong: #f2f2f2;
+}
+
+/* standing rule: any image sitting on a black background gets a thin white edge so it
+   doesn't bleed into the dark panel — covers every paginated page/row image since they're
+   all descendants of .project__media. Apply this to every dark-themed project, including
+   ones built after this rule was added. */
+.project--dark .project__media img {
+  border: 0.5px solid var(--proj-border);
+}
+
+.project__box {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+@media (min-width: 900px) {
+  .project__box {
+    display: grid;
+    grid-template-columns: var(--split, 1fr) 0.5px 1fr;
+    align-items: stretch;
+    overflow: hidden;
+  }
+
+  .project--image-first .project__text {
+    order: 3;
+  }
+
+  .project--image-first .project__divider {
+    order: 2;
+  }
+
+  .project--image-first .project__media {
+    order: 1;
+  }
+}
+
+/* divider always spans the full box edge-to-edge — never floats free of the frame */
+
+.project__divider {
+  background: var(--proj-border);
+  width: 100%;
+  height: 0.5px;
+  flex: none;
+}
+
+@media (min-width: 900px) {
+  .project__divider {
+    width: 0.5px;
+    height: 100%;
+  }
+}
+
+.project__text {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  justify-content: flex-start;
+  gap: 16px;
+  padding: 28px 20px 28px;
+  overflow-y: auto;
+}
+
+@media (min-width: 900px) {
+  .project__text {
+    justify-content: flex-end;
+  }
+}
+
+@media (min-width: 700px) {
+  .project__text {
+    padding: 40px 40px 40px;
+  }
+}
+
+@media (min-width: 900px) {
+  .project__text {
+    padding-bottom: 56px;
+  }
+}
+
+.project__title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 17px;
+  letter-spacing: 0.02em;
+  color: var(--proj-title);
+  margin: 0;
+  flex: none;
+}
+
+.project__description {
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-style: normal;
+  font-size: clamp(12px, 1.4vw, 14px);
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  text-align: justify;
+  text-align-last: left;
+  color: var(--proj-desc);
+  max-width: 30em;
+  flex: none;
+}
+
+.project__description p {
+  margin: 0 0 13px;
+}
+
+.project__description p:last-child {
+  margin-bottom: 0;
+}
+
+.project__description strong {
+  font-weight: 500;
+  color: var(--proj-strong);
+}
+
+.project__link {
+  align-self: flex-start;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--proj-title);
+  flex: none;
+}
+
+.project__media {
+  position: relative;
+  min-height: 200px;
+  padding: 28px 20px;
+  overflow-y: auto;
+}
+
+@media (min-width: 700px) {
+  .project__media {
+    padding: 40px 36px;
+  }
+}
+
+@media (min-width: 900px) {
+  .project__media {
+    min-height: 0;
+    padding: 56px 64px;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+/* paginated image pages: the media box's own bounds (top/bottom) never move — only the
+   pages inside crossfade in place. Each page is a self-contained grouped layout (e.g. a
+   2-image hero stack). A minimal prev/next chevron pair (bottom corners) pages through
+   them and loops; the prev chevron only appears once the visitor has navigated at least
+   once, so the very first page loads arrow-clean. */
+
+.project__pages {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+}
+
+@media (min-width: 900px) {
+  .project__pages {
+    flex: 1;
+    min-height: 0;
+    aspect-ratio: auto;
+  }
+}
+
+.project__page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.9s ease;
+}
+
+.project__page.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (min-width: 900px) {
+  .project__page {
+    gap: 16px;
+  }
+}
+
+/* a lone full-page image (not part of a row) shrink-wraps to its own rendered size —
+   width/height stay auto, capped by the available box — so a border sits flush against
+   the actual artwork instead of around empty object-fit:contain letterboxing. */
+.project__page img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  flex: 0 1 auto;
+  min-height: 0;
+  object-fit: contain;
+}
+
+/* the hero stack (page 1) is a deliberate full-bleed crop, edge to edge — it fills the
+   box completely (no letterboxing by definition), so it keeps the old fixed sizing */
+.project__page--crop img {
+  width: 100%;
+  height: 100%;
+  flex: 1 1 0;
+  object-fit: cover;
+}
+
+/* grouped rows within a page: a page can hold one or more horizontal rows of images,
+   stacked vertically. Images are never cropped — each is shown in full within its row. */
+
+.project__page-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* the mid row only has 2 (larger) images, so its natural centred span is narrower than
+   the 4-card rows above/below — widen the gap between the pair to push their outer edges
+   outward until they line up with the row above/below. */
+.project__page-row--mid {
+  flex: 1.4 1 0;
+  gap: 8px;
+}
+
+#project-trc .project__page:nth-of-type(3) .project__page-row--mid {
+  gap: 51px;
+}
+
+/* CHL: the landscape report-spread hero should read as the dominant image, with the
+   portrait strip of 4 cards below sitting clearly smaller — matches the Figma proportions
+   (hero roughly 2.5x the strip's height) rather than the default 1.4:1 mid-row ratio. The
+   ratio is also tuned so the hero's and strip's rendered content widths land equal, so their
+   outer edges line up despite the very different landscape/portrait aspect ratios. */
+#project-chl .project__page-row--mid {
+  flex: 2.49 1 0;
+}
+
+#project-chl .project__page-row:not(.project__page-row--mid) {
+  flex: 1 1 0;
+}
+
+/* CIVICUS: page 1's two landscape images share the same native width (2000px) but
+   different aspect ratios (CIVICUS_1 is 2000x1589, CIVICUS_2 is 2000x1413), so equal row
+   heights render CIVICUS_2 visibly wider than CIVICUS_1. Weighting each row's flex-grow by
+   the image's own natural height keeps both rendered at the same width (the same effective
+   scale from their shared 2000px native width) instead of matching heights and letting the
+   widths diverge. Page 2's images share identical dimensions already, so no override needed. */
+#project-civicus .project__page:nth-of-type(1) .project__page-row:nth-of-type(1) {
+  flex: 1589 1 0;
+}
+
+#project-civicus .project__page:nth-of-type(1) .project__page-row:nth-of-type(2) {
+  flex: 1413 1 0;
+}
+
+/* every row image keeps its own natural proportions at the row's full height — this is
+   what keeps the top/bottom edges flush with the row (and with page 1's edge-to-edge
+   images) instead of letterboxing when a fixed equal-width slot doesn't match its
+   aspect ratio. Width is intrinsic, so images shrink to fit rather than crop or stretch. */
+.project__page-row img {
+  flex: 0 1 auto;
+  min-width: 0;
+  width: auto;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* the mid row's two (larger) images don't need to shrink */
+.project__page-row--mid img {
+  flex: 0 0 auto;
+}
+
+/* the nav's height matches .project__media's own bottom padding at each breakpoint below,
+   so the arrows are vertically centred in the gap between the images and the frame edge —
+   then nudged up a touch so they don't sit right in the corner. Left/right use the same
+   20px/40px insets as the header's own padding (not media's wider padding), so the right
+   arrow lands flush with the header nav above, and the left arrow gets the same spacing,
+   mirrored off the media panel's own left edge. */
+.project__page-nav {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transform: translateY(-8px);
+  pointer-events: none;
+  z-index: 4;
+}
+
+@media (min-width: 700px) {
+  .project__page-nav { height: 40px; left: 40px; right: 40px; }
+}
+
+@media (min-width: 900px) {
+  .project__page-nav { height: 56px; }
+}
+
+/* prev/next sit at opposite edges of the frame rather than stacked next to each other */
+.project__page-btn {
+  pointer-events: auto;
+  background: none;
+  border: none;
+  padding: 10px;
+  margin: 0;
+  cursor: pointer;
+  color: var(--proj-title);
+  opacity: 0.55;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+/* an inactive project panel sets pointer-events:none on itself, but that doesn't stop a
+   descendant from re-enabling its own pointer-events — without this, an inactive panel's
+   stacked-behind arrow can still intercept clicks meant for the active panel's arrow at the
+   same screen position. */
+.project:not(.is-active) .project__page-btn {
+  pointer-events: none;
+}
+
+/* kept in flow (not display:none) so the next button stays pinned right via
+   justify-content even before the visitor has navigated once */
+.project__page-btn[hidden] {
+  display: flex;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.project__page-btn:hover,
+.project__page-btn:focus-visible {
+  opacity: 1;
+  color: var(--color-orange);
+}
+
+.project__page-btn svg {
+  display: block;
+  width: 8px;
+  height: 14px;
+}
+
+/* per-project divider split (desktop only) */
+
+@media (min-width: 900px) {
+  #project-trc { --split: 40%; }
+  #project-sdi { --split: 53%; }
+  #project-pcp { --split: 48%; }
+  #project-circular { --split: 53%; }
+  #project-grassroots { --split: 49%; }
+  #project-chl { --split: 60%; }
+  #project-civicus { --split: 50%; }
+  #project-arkology { --split: 56%; }
+}
