@@ -16,6 +16,44 @@
   // about any other.
   const pageControllers = new Map();
 
+  // every project past the first one ships its images/videos as data-src instead of src
+  // (see projects.html) — loading all 8 projects' media up front was ~70MB on a fresh
+  // visit and made the page take well over a minute to finish loading. loadPanel swaps a
+  // panel's media over to real src, once, the first time it's actually needed; every
+  // already-loaded panel is a no-op on repeat calls since there's nothing left to swap.
+  const loadedPanels = new WeakSet();
+  function loadPanel(panel) {
+    if (!panel || loadedPanels.has(panel)) return;
+    loadedPanels.add(panel);
+    panel.querySelectorAll('[data-src]').forEach((el) => {
+      el.src = el.dataset.src;
+      delete el.dataset.src;
+      if (el.tagName === 'VIDEO') el.load();
+    });
+  }
+
+  // desktop: panels are stacked via absolute positioning (see projects.css), so they all
+  // geometrically occupy the same box regardless of which is active — there's no scroll
+  // position to watch. Instead, load a panel the moment it becomes active, plus its two
+  // immediate neighbours (whichever direction the visitor goes next), so continuing to
+  // wheel/swipe through never shows a blank flash while the next project's media fetches.
+  function preloadAround(index) {
+    loadPanel(panels[index]);
+    loadPanel(panels[(index + 1) % panels.length]);
+    loadPanel(panels[(index - 1 + panels.length) % panels.length]);
+  }
+
+  // mobile: every panel sits in the page's normal flow, so a generous-rootMargin
+  // IntersectionObserver can watch real scroll position instead — each panel's media
+  // loads once it's within about a screen's height of coming into view, well before the
+  // visitor actually reaches it.
+  const panelLoadObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) loadPanel(entry.target);
+    });
+  }, { rootMargin: '800px 0px' });
+  panels.forEach((panel) => panelLoadObserver.observe(panel));
+
   // below this width every project is shown in full, stacked in normal document flow (see
   // projects.css) — the whole single-active-panel carousel and its navigation only apply
   // at and above it
@@ -42,6 +80,7 @@
     panels[next].removeAttribute('aria-hidden');
     pageControllers.get(panels[next])?.onEnter();
     activeIndex = next;
+    preloadAround(next);
     syncTheme(panels[next]);
     transitioning = true;
     window.setTimeout(() => { transitioning = false; }, TRANSITION_MS);
@@ -67,6 +106,7 @@
 
   syncForViewport();
   window.addEventListener('resize', syncForViewport);
+  if (isDesktop()) preloadAround(activeIndex);
 
   // below the carousel breakpoint, follow scroll position: the header/frame theme should
   // switch right as a new project's description reaches the top — not partway through its
