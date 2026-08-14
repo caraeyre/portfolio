@@ -8,6 +8,13 @@
 
   let transitioning = false;
   const TRANSITION_MS = 1100;
+  const AUTO_ADVANCE_MS = 8000;
+
+  // each project's own image-page auto-advance (see panels.forEach below) only actually
+  // runs while that project is the one on screen — registered here so goToProject can
+  // reach into a specific panel's pagination closure without every panel needing to know
+  // about any other.
+  const pageControllers = new Map();
 
   // below this width every project is shown in full, stacked in normal document flow (see
   // projects.css) — the whole single-active-panel carousel and its navigation only apply
@@ -30,8 +37,10 @@
     if (next === activeIndex || transitioning) return;
     panels[activeIndex].classList.remove('is-active');
     panels[activeIndex].setAttribute('aria-hidden', 'true');
+    pageControllers.get(panels[activeIndex])?.onLeave();
     panels[next].classList.add('is-active');
     panels[next].removeAttribute('aria-hidden');
+    pageControllers.get(panels[next])?.onEnter();
     activeIndex = next;
     syncTheme(panels[next]);
     transitioning = true;
@@ -159,10 +168,23 @@
     let pageIndex = Math.max(0, pages.findIndex((p) => p.classList.contains('is-active')));
     let hasNavigated = false;
     let pageTransitioning = false;
+    let autoAdvanceTimer = null;
 
     function renderPageNav() {
       prevBtn.hidden = !hasNavigated;
       nextBtn.hidden = false;
+    }
+
+    // slideshow: each page waits 8s for the visitor to page through manually before
+    // advancing on its own. Any navigation — auto or manual — restarts the countdown, so
+    // a visitor who's actively clicking/swiping never gets interrupted mid-look. Pages
+    // holding a video are exempt — a visitor watching one shouldn't get bumped along
+    // mid-clip, and the video's own gated start/stop (see wireGatedVideo below) already
+    // resets it fresh every time its page is (re-)entered regardless.
+    function scheduleAutoAdvance() {
+      window.clearTimeout(autoAdvanceTimer);
+      if (pages[pageIndex].querySelector('video')) return;
+      autoAdvanceTimer = window.setTimeout(() => goToPage(pageIndex + 1), AUTO_ADVANCE_MS);
     }
 
     function goToPage(nextIndex) {
@@ -178,6 +200,7 @@
         window.setTimeout(() => { pageTransitioning = false; }, TRANSITION_MS);
       }
       renderPageNav();
+      scheduleAutoAdvance();
     }
 
     nextBtn.addEventListener('click', (e) => { e.stopPropagation(); goToPage(pageIndex + 1); });
@@ -204,5 +227,123 @@
     }, { passive: true });
 
     renderPageNav();
+
+    // desktop: this project's own auto-advance should only run while it's actually the one
+    // on screen — starting it for every project at load time (regardless of whether
+    // they're the visible one) is exactly what made background projects drift away from
+    // page 1 before the visitor ever got to them. goToProject calls onEnter/onLeave as the
+    // visitor switches projects; only the initially-active project needs it started here.
+    // Mobile has no equivalent "which project is active" concept (every project sits in
+    // the page's normal flow at once), so there every project's auto-advance just runs
+    // from the start, unaffected by this.
+    pageControllers.set(panel, {
+      onEnter: scheduleAutoAdvance,
+      onLeave() {
+        window.clearTimeout(autoAdvanceTimer);
+        if (pageIndex !== 0) {
+          pages[pageIndex].classList.remove('is-active');
+          pages[0].classList.add('is-active');
+          pageIndex = 0;
+          hasNavigated = false;
+          renderPageNav();
+        }
+      },
+    });
+    if (!isDesktop() || panel.classList.contains('is-active')) scheduleAutoAdvance();
+
+    // mobile: there's no goToProject switch to hang the "reset to page 1" behaviour off
+    // (see above — it no-ops below the carousel breakpoint), so watch the panel itself
+    // and call the same onLeave reset once it's scrolled fully out of view. That way
+    // scrolling back up to a project later always finds it back on page 1, matching
+    // desktop's behaviour when re-entering a project.
+    const panelResetObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (isDesktop() || entry.isIntersecting) return;
+        pageControllers.get(panel)?.onLeave();
+      });
+    }, { threshold: 0 });
+    panelResetObserver.observe(panel);
   });
+
+  // any row of one or more videos that should only play while its own page is actually on
+  // screen: relay:true chains multiple clips (Mandala hands off to Spiral logic and back);
+  // relay:false just loops a single clip. Leaving the page (however that happens — the
+  // arrows, a swipe, the auto-advance timer, or switching to a different project entirely)
+  // stops every clip in the row and rewinds it, so coming back always starts fresh.
+  function wireGatedVideo(row, { relay }) {
+    const clips = Array.from(row.querySelectorAll('video'));
+    if (!clips.length) return;
+    const panel = row.closest('[data-project]');
+    const page = row.closest('[data-page]');
+
+    function stopClips() {
+      clips.forEach((clip) => {
+        clip.pause();
+        clip.currentTime = 0;
+      });
+    }
+
+    function startClips() {
+      if (clips.every((clip) => clip.paused)) clips[0].play().catch(() => {});
+    }
+
+    if (relay && clips.length > 1) {
+      clips.forEach((clip, i) => {
+        clip.addEventListener('ended', () => {
+          clip.currentTime = 0;
+          clips[(i + 1) % clips.length].play().catch(() => {});
+        });
+      });
+    } else {
+      clips.forEach((clip) => { clip.loop = true; });
+    }
+
+    // desktop: page/project activation is a class toggle (an opacity crossfade, not an
+    // actual change in on-screen position), so a MutationObserver on those two classes
+    // catches every way the row's page can become the visible one — or stop being it —
+    // regardless of which navigation path triggered the change.
+    function syncDesktopVisibility() {
+      if (!isDesktop()) return;
+      const visible = panel.classList.contains('is-active') && page.classList.contains('is-active');
+      if (visible) startClips(); else stopClips();
+    }
+    new MutationObserver(syncDesktopVisibility).observe(panel, { attributes: true, attributeFilter: ['class'] });
+    new MutationObserver(syncDesktopVisibility).observe(page, { attributes: true, attributeFilter: ['class'] });
+
+    // mobile: every project/page sits in normal document flow, so "active" alone doesn't
+    // mean on-screen — an IntersectionObserver catches the visitor actually scrolling this
+    // row into (or out of) view.
+    const io = new IntersectionObserver((entries) => {
+      if (isDesktop()) return;
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) startClips(); else stopClips();
+      });
+    }, { threshold: 0.5 });
+    io.observe(row);
+
+    window.addEventListener('resize', syncDesktopVisibility);
+    syncDesktopVisibility();
+
+    // mobile Safari (and some other mobile browsers) block a video's very first
+    // programmatic play() unless it happens inside a direct user gesture — but the
+    // triggers above (an observer callback, a resize) never count as one. Priming every
+    // clip with a play()-then-immediate-pause() on the visitor's first tap/click anywhere
+    // satisfies that gesture requirement up front, so the real, gated play() calls later —
+    // gesture or not — are allowed through.
+    function unlock() {
+      clips.forEach((clip) => {
+        clip.play().then(() => clip.pause()).catch(() => {});
+      });
+      document.removeEventListener('touchstart', unlock);
+      document.removeEventListener('click', unlock);
+    }
+    document.addEventListener('touchstart', unlock, { once: true, passive: true });
+    document.addEventListener('click', unlock, { once: true });
+  }
+
+  // a row of multiple clips that relay back and forth (not currently used by any page, but
+  // kept wired up — TRC's old video slide used this before it was removed).
+  document.querySelectorAll('.project__page-row--videos').forEach((row) => wireGatedVideo(row, { relay: true }));
+  // PCP's and Arkology's video+image rows: one looping clip apiece.
+  document.querySelectorAll('.project__page-row--gated-video').forEach((row) => wireGatedVideo(row, { relay: false }));
 })();

@@ -11,6 +11,16 @@
   --font-body: 'Zilla Slab', serif;
 }
 
+/* the orange reads too bright/pastel against light backgrounds — a bit darker there for
+   better contrast, while staying the original brighter shade against dark ones. Covers the
+   Home page and Bits and bobs (always light) plus Selected projects while a light-themed
+   project is active (.theme-light, toggled in js/projects.js). */
+.home,
+.bits-page,
+.theme-light {
+  --color-orange: #D1824D;
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;

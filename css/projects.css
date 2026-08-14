@@ -216,11 +216,12 @@
   --proj-strong: #f2f2f2;
 }
 
-/* standing rule: any image sitting on a black background gets a thin white edge so it
-   doesn't bleed into the dark panel — covers every paginated page/row image since they're
-   all descendants of .project__media. Apply this to every dark-themed project, including
-   ones built after this rule was added. */
-.project--dark .project__media img {
+/* standing rule: any image (or video) sitting on a black background gets a thin white edge
+   so it doesn't bleed into the dark panel — covers every paginated page/row image since
+   they're all descendants of .project__media. Apply this to every dark-themed project,
+   including ones built after this rule was added. */
+.project--dark .project__media img,
+.project--dark .project__media video {
   border: 0.5px solid var(--proj-border);
 }
 
@@ -253,7 +254,7 @@
   .project__box {
     height: 100%;
     display: grid;
-    grid-template-columns: var(--split, 1fr) 0.5px 1fr;
+    grid-template-columns: var(--split, 1fr) var(--divider-width, 0.5px) 1fr;
     align-items: stretch;
     overflow: hidden;
   }
@@ -282,7 +283,7 @@
 
 @media (min-width: 900px) {
   .project__divider {
-    width: 0.5px;
+    width: var(--divider-width, 0.5px);
     height: 100%;
   }
 }
@@ -334,7 +335,7 @@
   text-align: justify;
   text-align-last: left;
   color: var(--proj-desc);
-  max-width: 30em;
+  max-width: 42em;
   flex: none;
 }
 
@@ -456,13 +457,84 @@
 /* the hero stack (page 1, TRC): a deliberate full-bleed crop from 900px, edge to edge.
    Below that it drops the forced crop and just shows each image at its natural
    proportions (via the .project__page > img rule above) — "fill the box completely"
-   doesn't apply once the box is just content-height. */
+   doesn't apply once the box is just content-height. A little bottom padding keeps the
+   lower image from running all the way to the frame edge, so the page-nav arrows (which
+   float over that bottom strip) always have clear, uncluttered space to sit in instead of
+   overlapping busy image content. */
 @media (min-width: 900px) {
+  .project__page--crop {
+    padding-bottom: 36px;
+  }
+
   .project__page--crop img {
     width: 100%;
     height: 100%;
     flex: 1 1 0;
     object-fit: cover;
+  }
+}
+
+/* TRC page 3: same full-bleed, edge-to-edge treatment as the page 1 hero, but as a 2x2
+   grid — each row pairs one dominant image with one narrower one, mirrored between the
+   two rows for a crisscross rhythm. Images are cropped (object-fit: cover) to fill their
+   box exactly, matching the hero's cropped treatment. Same 36px bottom padding as the
+   hero, for the same page-nav arrow clearance, and the same 16px gap as the hero's own
+   image stack. */
+@media (min-width: 900px) {
+  .project__page--quad {
+    padding-bottom: 36px;
+  }
+
+  .project__page--quad .project__page-row {
+    gap: 16px;
+  }
+
+  .project__page--quad .project__page-row img {
+    width: auto;
+    height: 100%;
+    min-width: 0;
+    object-fit: cover;
+  }
+
+  .project__page--quad .project__page-row:nth-of-type(1) img:nth-of-type(1),
+  .project__page--quad .project__page-row:nth-of-type(2) img:nth-of-type(2) {
+    flex: 2.5 1 0;
+  }
+
+  .project__page--quad .project__page-row:nth-of-type(1) img:nth-of-type(2),
+  .project__page--quad .project__page-row:nth-of-type(2) img:nth-of-type(1) {
+    flex: 1 1 0;
+  }
+}
+
+/* TRC page 3 on mobile: same crisscross pairing as desktop (one dominant image, one
+   narrower one, cropped to fill), just given its own fixed-height row via aspect-ratio
+   instead of sharing the page's full height — there's no fixed-height page box to lean
+   on below the carousel breakpoint. The ratio matches page 2's own row height at this
+   width, so both slides read at the same scale. */
+@media (max-width: 899px) {
+  .project__page--quad .project__page-row {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    aspect-ratio: 2.36 / 1;
+  }
+
+  .project__page--quad .project__page-row img {
+    width: auto;
+    height: 100%;
+    min-width: 0;
+    object-fit: cover;
+  }
+
+  .project__page--quad .project__page-row:nth-of-type(1) img:nth-of-type(1),
+  .project__page--quad .project__page-row:nth-of-type(2) img:nth-of-type(2) {
+    flex: 2.5 1 0;
+  }
+
+  .project__page--quad .project__page-row:nth-of-type(1) img:nth-of-type(2),
+  .project__page--quad .project__page-row:nth-of-type(2) img:nth-of-type(1) {
+    flex: 1 1 0;
   }
 }
 
@@ -508,10 +580,6 @@
     gap: 8px;
   }
 
-  #project-trc .project__page:nth-of-type(3) .project__page-row--mid {
-    gap: 51px;
-  }
-
   /* CHL: the landscape report-spread hero should read as the dominant image, with the
      portrait strip of 4 cards below sitting clearly smaller — matches the Figma proportions
      (hero roughly 2.5x the strip's height) rather than the default 1.4:1 mid-row ratio. The
@@ -553,7 +621,99 @@
   height: auto;
 }
 
+/* a portrait image sitting in its own row (e.g. SDI's closing icon-grid page, under the
+   landscape "know your city" spread): shown at natural proportions it would be mostly
+   empty space above/below its content, so instead it's cropped to the same landscape
+   ratio as the image next to it (object-fit: cover), on both mobile and desktop — unlike
+   most row images, which only crop from 900px. object-position is tuned to this specific
+   image's content (the icon grid sits slightly above centre in the source file), not a
+   generic default. */
+.project__page-row.project__page-row--crop img {
+  aspect-ratio: 2480 / 1754;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  object-position: center 46%;
+}
+
+/* from 900px the row's height is shared equally with its sibling row (the generic
+   .project__page-row img rule below sizes from that shared height, width auto) — the crop
+   image needs to follow the same height-driven sizing, not the width-driven one used on
+   mobile, or it would overflow the row's actual height allotment. */
 @media (min-width: 900px) {
+  .project__page-row.project__page-row--crop img {
+    width: auto;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 46%;
+  }
+}
+
+/* PCP's video+image pages: a clip stacked above a static screenshot of the same section —
+   the video isn't covered by the generic .project__page-row img rule above (that selector
+   only matches <img>), so it needs the same sizing spelled out for <video> explicitly. */
+.project__page-row--gated-video video {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (min-width: 900px) {
+  .project__page-row--gated-video video {
+    width: auto;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+/* each PCP video+image pair is forced to a shared aspect ratio (object-fit: cover crops
+   both to it) so the two rows read as a matched, equally-sized pair rather than each
+   following its own slightly different native proportions. */
+#project-pcp .project__page:nth-of-type(4) .project__page-row--gated-video video,
+#project-pcp .project__page:nth-of-type(4) .project__page-row:not(.project__page-row--gated-video) img {
+  aspect-ratio: 3584 / 1986;
+  object-fit: cover;
+}
+
+#project-pcp .project__page:nth-of-type(5) .project__page-row--gated-video video,
+#project-pcp .project__page:nth-of-type(5) .project__page-row:not(.project__page-row--gated-video) img {
+  aspect-ratio: 1280 / 710;
+  object-fit: cover;
+}
+
+/* TRC's video page: two clips side by side with generous breathing room between them
+   (both share the same 3:4 aspect ratio, so an even split needs no per-item tuning). */
+.project__page-row--videos {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.project__page-row--videos video {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (min-width: 900px) {
+  /* wider gap and smaller videos than a plain edge-to-edge split: each video's width
+     comes from flex-grow sharing the row equally (so the pair's outer edges still land
+     exactly on the same left/right edges as the other TRC slides), but height is left to
+     follow the video's own aspect ratio (instead of stretching to fill the row) and
+     centred vertically — that's what reads as "smaller", floating in the middle of the
+     same box the other slides fill edge to edge. */
+  .project__page-row--videos {
+    gap: 100px;
+    align-items: center;
+  }
+
+  .project__page-row--videos video {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
   .project__page-row img {
     flex: 0 1 auto;
     min-width: 0;
@@ -568,39 +728,29 @@
   }
 }
 
-/* TRC pages 2 and 3: keep each row's full image count on one line (4 across, then the
-   2-image mid row, then 4 across) instead of wrapping to 2 columns — same grouping as
-   desktop, just shrunk to fit. No cropping: images stay at their natural proportions,
-   just narrower. */
+/* TRC page 2 (webinar series grid): rows share the page's full available height equally,
+   matching the vertical span of page 1's full-bleed hero (same 36px bottom padding for
+   arrow clearance, same 16px gap as the hero's own image stack). Images keep their natural
+   proportions (the generic .project__page-row img rule's own width:auto/height:100%/
+   object-fit:contain already does this) rather than being force-cropped to fill the row's
+   width exactly — a visible gap on either side reads better than cropped cards. */
+@media (min-width: 900px) {
+  #project-trc .project__page:nth-of-type(2) {
+    padding-bottom: 36px;
+  }
+
+  #project-trc .project__page:nth-of-type(2) .project__page-row {
+    flex: 1 1 0;
+    gap: 16px;
+  }
+}
+
+/* same grid on mobile, just fixed at 3 columns instead of auto-fit — keeps each row of
+   3 cards on one line, matching desktop's grouping, instead of wrapping to 2+1. */
 @media (max-width: 899px) {
-  #project-trc .project__page:not(.project__page--crop) .project__page-row {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-  }
-
-  #project-trc .project__page:not(.project__page--crop) .project__page-row--mid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-  }
-
-  /* pages 2 and 3's mid rows each pair a landscape overlay with a portrait card — align
-     both to a shared height instead of equal grid columns, so the landscape image reads
-     wider and the portrait one narrower, matching their natural proportions instead of
-     stretching both to the same box. */
-  #project-trc .project__page:nth-of-type(2) .project__page-row--mid,
-  #project-trc .project__page:nth-of-type(3) .project__page-row--mid {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 150px;
-    gap: 6px;
-  }
-
-  #project-trc .project__page:nth-of-type(2) .project__page-row--mid img,
-  #project-trc .project__page:nth-of-type(3) .project__page-row--mid img {
-    width: auto;
-    height: 100%;
-    object-fit: contain;
+  #project-trc .project__page:nth-of-type(2) .project__page-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
   }
 }
 
@@ -662,11 +812,15 @@
 
 /* on desktop an inactive project panel sets pointer-events:none on itself, but that
    doesn't stop a descendant from re-enabling its own pointer-events — without this, an
-   inactive panel's stacked-behind arrow can still intercept clicks meant for the active
-   panel's arrow at the same screen position. Not a concern below the carousel breakpoint,
-   where every project is shown (and interactive) at once. */
+   inactive panel's stacked-behind arrow (or, worse, its stacked-behind image, once images
+   became clickable via the lightbox) can still intercept clicks meant for the active
+   panel's own arrow/image at the same screen position, since .project__page.is-active
+   sets pointer-events: auto regardless of whether the project it belongs to is the one
+   currently showing. Not a concern below the carousel breakpoint, where every project is
+   shown (and interactive) at once. */
 @media (min-width: 900px) {
-  .project:not(.is-active) .project__page-btn {
+  .project:not(.is-active) .project__page-btn,
+  .project:not(.is-active) .project__page {
     pointer-events: none;
   }
 }
@@ -701,5 +855,5 @@
   #project-grassroots { --split: 49%; }
   #project-chl { --split: 60%; }
   #project-civicus { --split: 50%; }
-  #project-arkology { --split: 56%; }
+  #project-arkology { --split: 51%; --divider-width: 1px; }
 }
