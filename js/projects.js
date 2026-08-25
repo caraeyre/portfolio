@@ -8,7 +8,7 @@
 
   let transitioning = false;
   const TRANSITION_MS = 1100;
-  const AUTO_ADVANCE_MS = 8000;
+  const AUTO_ADVANCE_MS = 20000;
 
   // each project's own image-page auto-advance (see panels.forEach below) only actually
   // runs while that project is the one on screen — registered here so goToProject can
