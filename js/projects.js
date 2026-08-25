@@ -16,6 +16,45 @@
   // about any other.
   const pageControllers = new Map();
 
+  // the first two projects ship their images/videos as real src (see projects.html);
+  // every project from the third one on ships as data-src instead. loadPanel swaps a
+  // panel's media over to real src, once — a plain, well-understood "current, plus stay
+  // two ahead" buffer: reaching a project loads the two after it, so continuing forward
+  // never lands on a still-loading (and briefly empty-looking) project. Already-loaded
+  // panels are a no-op on repeat calls.
+  const loadedPanels = new WeakSet();
+  panels.slice(0, 2).forEach((panel) => loadedPanels.add(panel));
+
+  function loadPanel(panel) {
+    if (!panel || loadedPanels.has(panel)) return;
+    loadedPanels.add(panel);
+    panel.querySelectorAll('[data-src]').forEach((el) => {
+      el.src = el.dataset.src;
+      delete el.dataset.src;
+      if (el.tagName === 'VIDEO') el.load();
+    });
+  }
+
+  // reaching project index i loads i+1 and i+2 (the first project doesn't trigger this —
+  // the first two are already loaded up front, see above).
+  function preloadAhead(index) {
+    if (index < 1) return;
+    loadPanel(panels[index + 1]);
+    loadPanel(panels[index + 2]);
+  }
+
+  // desktop: panels are stacked via absolute positioning (see projects.css), so there's
+  // no scroll position to watch — preload as each one becomes active instead.
+  // mobile: every panel sits in the page's normal flow, so a generous-rootMargin
+  // IntersectionObserver watches real scroll position, preloading a couple of screens
+  // before the visitor actually gets there.
+  const panelLoadObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) preloadAhead(panels.indexOf(entry.target));
+    });
+  }, { rootMargin: '800px 0px' });
+  panels.forEach((panel) => panelLoadObserver.observe(panel));
+
   // below this width every project is shown in full, stacked in normal document flow (see
   // projects.css) — the whole single-active-panel carousel and its navigation only apply
   // at and above it
@@ -42,6 +81,7 @@
     panels[next].removeAttribute('aria-hidden');
     pageControllers.get(panels[next])?.onEnter();
     activeIndex = next;
+    preloadAhead(next);
     syncTheme(panels[next]);
     transitioning = true;
     window.setTimeout(() => { transitioning = false; }, TRANSITION_MS);

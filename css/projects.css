@@ -1,3 +1,12 @@
+/* while a project's media is still waiting to load (see js/projects.js), its img/video
+   tags have no src yet — hide them instead of showing the browser's broken-image icon.
+   The layout space is already reserved via the width/height attributes on each tag, so
+   this doesn't cause any shift once the real src lands. */
+img[data-src],
+video[data-src] {
+  visibility: hidden;
+}
+
 .projects-page {
   height: 100vh;
   height: calc(var(--vh, 1vh) * 100);

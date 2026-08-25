@@ -133,6 +133,15 @@
   pointer-events: none;
 }
 
+/* while an item's media is still waiting to load (see js/bits.js), its img/video tag
+   has no src yet — hide it instead of showing the browser's broken-image icon. The
+   item's own --w/--h already reserve its layout space, so this causes no shift once
+   the real src lands. */
+img[data-src],
+video[data-src] {
+  visibility: hidden;
+}
+
 .bits-item {
   position: absolute;
   left: var(--x);
