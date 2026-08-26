@@ -463,18 +463,22 @@ video[data-src] {
   }
 }
 
-/* the hero stack (page 1, TRC): a deliberate full-bleed crop from 900px, edge to edge.
-   Below that it drops the forced crop and just shows each image at its natural
-   proportions (via the .project__page > img rule above) — "fill the box completely"
-   doesn't apply once the box is just content-height. A little bottom padding keeps the
-   lower image from running all the way to the frame edge, so the page-nav arrows (which
-   float over that bottom strip) always have clear, uncluttered space to sit in instead of
-   overlapping busy image content. */
+/* every one of TRC's own pages uses a wider gap between its images/rows than the
+   default — see the hero stack below, this is what actually creates the page-nav
+   arrows' clear space, instead of shrinking the whole page short of every other
+   project's bottom edge with dedicated bottom padding. */
 @media (min-width: 900px) {
-  .project__page--crop {
-    padding-bottom: 36px;
+  #project-trc .project__page {
+    gap: 28px;
   }
+}
 
+/* the hero stack (page 1, TRC): a deliberate full-bleed crop from 900px, edge to edge —
+   same bottom edge as every other project's media (no extra bottom padding), relying on
+   the wider gap above between the two images so the page-nav arrows (which float over
+   that bottom strip) still land in clear space rather than overlapping busy image
+   content. */
+@media (min-width: 900px) {
   .project__page--crop img {
     width: 100%;
     height: 100%;
@@ -486,16 +490,11 @@ video[data-src] {
 /* TRC page 3: same full-bleed, edge-to-edge treatment as the page 1 hero, but as a 2x2
    grid — each row pairs one dominant image with one narrower one, mirrored between the
    two rows for a crisscross rhythm. Images are cropped (object-fit: cover) to fill their
-   box exactly, matching the hero's cropped treatment. Same 36px bottom padding as the
-   hero, for the same page-nav arrow clearance, and the same 16px gap as the hero's own
-   image stack. */
+   box exactly, matching the hero's cropped treatment. Same wider gap as the hero's own
+   image stack, same reasoning (arrow clearance without shrinking the whole page). */
 @media (min-width: 900px) {
-  .project__page--quad {
-    padding-bottom: 36px;
-  }
-
   .project__page--quad .project__page-row {
-    gap: 16px;
+    gap: 28px;
   }
 
   .project__page--quad .project__page-row img {
@@ -738,19 +737,15 @@ video[data-src] {
 }
 
 /* TRC page 2 (webinar series grid): rows share the page's full available height equally,
-   matching the vertical span of page 1's full-bleed hero (same 36px bottom padding for
-   arrow clearance, same 16px gap as the hero's own image stack). Images keep their natural
-   proportions (the generic .project__page-row img rule's own width:auto/height:100%/
-   object-fit:contain already does this) rather than being force-cropped to fill the row's
-   width exactly — a visible gap on either side reads better than cropped cards. */
+   matching the vertical span of page 1's full-bleed hero (same wider gap as the hero's
+   own image stack). Images keep their natural proportions (the generic
+   .project__page-row img rule's own width:auto/height:100%/object-fit:contain already
+   does this) rather than being force-cropped to fill the row's width exactly — a visible
+   gap on either side reads better than cropped cards. */
 @media (min-width: 900px) {
-  #project-trc .project__page:nth-of-type(2) {
-    padding-bottom: 36px;
-  }
-
   #project-trc .project__page:nth-of-type(2) .project__page-row {
     flex: 1 1 0;
-    gap: 16px;
+    gap: 28px;
   }
 }
 
@@ -852,16 +847,6 @@ video[data-src] {
   display: block;
   width: 8px;
   height: 14px;
-}
-
-/* TRC's own pages all carry an extra 36px of bottom padding for page-nav arrow
-   clearance (see .project__page--crop etc. above), which the text column doesn't
-   share — matching it here so the description's last line ends flush with the
-   image's, instead of running 36px further down the frame. */
-@media (min-width: 900px) {
-  #project-trc .project__text {
-    padding-bottom: calc(56px + 36px);
-  }
 }
 
 /* per-project divider split (desktop only) */
