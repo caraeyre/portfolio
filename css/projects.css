@@ -854,6 +854,16 @@ video[data-src] {
   height: 14px;
 }
 
+/* TRC's own pages all carry an extra 36px of bottom padding for page-nav arrow
+   clearance (see .project__page--crop etc. above), which the text column doesn't
+   share — matching it here so the description's last line ends flush with the
+   image's, instead of running 36px further down the frame. */
+@media (min-width: 900px) {
+  #project-trc .project__text {
+    padding-bottom: calc(56px + 36px);
+  }
+}
+
 /* per-project divider split (desktop only) */
 
 @media (min-width: 900px) {
@@ -864,5 +874,5 @@ video[data-src] {
   #project-grassroots { --split: 49%; }
   #project-chl { --split: 60%; }
   #project-civicus { --split: 50%; }
-  #project-arkology { --split: 51%; --divider-width: 1px; }
+  #project-arkology { --split: 51%; }
 }
