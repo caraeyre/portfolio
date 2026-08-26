@@ -25,6 +25,15 @@
   cursor: zoom-out;
 }
 
+/* base.css's img/video reset sets display: block on every image and video on the page —
+   an author rule, which (per the normal CSS cascade) overrides the browser's own built-in
+   [hidden] { display: none } rule for the un-shown one of these two (see js/lightbox.js),
+   leaving it visibly sitting there instead of actually hidden. */
+.lightbox img[hidden],
+.lightbox video[hidden] {
+  display: none;
+}
+
 .lightbox__close {
   position: absolute;
   top: 24px;
