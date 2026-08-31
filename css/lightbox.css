@@ -22,7 +22,7 @@
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  cursor: zoom-out;
+  cursor: url('../assets/icons/zoom-out-cursor.png') 20 20, zoom-out;
 }
 
 /* base.css's img/video reset sets display: block on every image and video on the page —
@@ -70,5 +70,5 @@ body.lightbox-open {
 
 [data-lightbox] img,
 [data-lightbox] video {
-  cursor: zoom-in;
+  cursor: url('../assets/icons/zoom-cursor.png') 20 20, zoom-in;
 }
